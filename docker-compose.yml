@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   php:
-    image: php:8.4-fpm
+    build: .
     container_name: php
     working_dir: /var/www/html
     volumes:
@@ -11,9 +11,6 @@ services:
       - symfony
     depends_on:
       - db
-    environment:
-      COMPOSER_ALLOW_SUPERUSER: 1
-    command: ["php-fpm"]
 
   nginx:
     image: nginx:alpine
@@ -33,9 +30,9 @@ services:
     container_name: db
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: symfony
-      MYSQL_USER: symfony
-      MYSQL_PASSWORD: symfony
+      MYSQL_DATABASE: app
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: abc123.
     ports:
       - "3306:3306"
     volumes:
