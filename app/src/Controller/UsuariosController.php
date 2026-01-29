@@ -14,8 +14,8 @@ use Symfony\Component\Routing\Exception\MethodNotAllowedException;
 
 class UsuariosController extends AbstractController
 {
-    #[Route('/users', name: 'get_users')]
-    public function index(Request $request, EntityManagerInterface $entitymanager): Response
+    #[Route('/users', name: 'get_users', methods: ['GET'])]
+    public function getUsers(Request $request, EntityManagerInterface $entitymanager): Response
     {
         $usuarios = $entitymanager->getRepository(Usuarios::class)->findAll();
 
@@ -42,6 +42,26 @@ class UsuariosController extends AbstractController
         }
 
         $response = $this->json($data);
+
+        return $response;
+    }
+
+    #[Route('/users', name: 'post_users', methods: ['POST'])]
+    public function addUser(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        $usuario = new Usuarios();
+
+        $usuario->setUsername($data['username']);
+        $usuario->setEmail($data['email']);
+        $usuario->setPass(password_hash($data['pass'], PASSWORD_DEFAULT));
+        $usuario->setSalario($data['salario']);
+        $usuario->setSalarioDisponible($data['disponible']);
+        $usuario->setAhorro($data['ahorros']);
+        $entityManager->persist($usuario);
+        $entityManager->flush();
+
+        $response = $this->json('Usuario creado con exito', 201);
 
         return $response;
     }
