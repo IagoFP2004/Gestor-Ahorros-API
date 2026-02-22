@@ -2,10 +2,13 @@
 
 namespace App\Entity;
 
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\UsuariosRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: UsuariosRepository::class)]
+#[UniqueEntity('email')]
 class Usuarios
 {
     #[ORM\Id]
@@ -16,7 +19,9 @@ class Usuarios
     #[ORM\Column(length: 255)]
     private ?string $username = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(name: 'email', type: 'string', length: 255, unique: true)]
+    #[Assert\Email]
+    #[UniqueEntity(fields: ['email'], message: 'Este email ya está registrado')]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]

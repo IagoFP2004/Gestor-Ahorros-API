@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Exception\MethodNotAllowedException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UsuariosController extends AbstractController
 {
@@ -57,31 +58,7 @@ class UsuariosController extends AbstractController
             return $this->json(['error' => 'JSON inválido'], 400);
         }
 
-        $errors = [];
-
-        if (empty($data['username'])) {
-            $errors['username'] = "El campo username es obligatorio";
-        }
-
-        if (empty($data['email'])) {
-            $errors['email'] = "El campo email es obligatorio";
-        }
-
-        if (empty($data['pass'])) {
-            $errors['pass'] = "El campo pass es obligatorio";
-        }
-
-        if (!isset($data['salario'])) {
-            $errors['salario'] = "El campo salario es obligatorio";
-        }
-
-        if (!isset($data['disponible'])) {
-            $errors['disponible'] = "El campo disponible es obligatorio";
-        }
-
-        if (!isset($data['ahorros'])) {
-            $errors['ahorros'] = "El campo ahorros es obligatorio";
-        }
+        $errors = $this->checkData($data, $entityManager);
 
         if (!empty($errors)) {
             return $this->json($errors, 400);
@@ -100,4 +77,55 @@ class UsuariosController extends AbstractController
 
         return $this->json('Usuario creado con éxito', 201);
     }
+
+    public function checkData(array $data, EntityManagerInterface $entityManager) : array
+    {
+        $errors = [];
+
+        if (!isset($data['username'])) {
+            $errors['username'] = 'El nombre de usuario es requerido';
+        }else if (empty($data['username'])) {
+            $errors['username'] = "El campo username no puede estar vacio";
+        }else if (!is_string($data['username'])) {
+            $errors['username'] = "El campo username debe ser un string";
+        }else if (strlen($data['username']) < 3 || strlen($data['username']) > 64) {
+            $errors['username'] = "El campo username debe tener al menos 3 caracteres y menos de 64";
+        }
+
+        if (!isset($data['email'])) {
+            $errors['email'] = 'El email es requerido';
+        }else if (empty($data['email'])) {
+            $errors['email'] = "El campo email no puede estar vacio";
+        }else if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = "El campo email debe tener un formato correcto";
+        }else if ($this->duplicateEmail($data['email'], $entityManager)) {
+           $errors['email'] = "El email ya esta en uso";
+        }
+
+        if (empty($data['pass'])) {
+            $errors['pass'] = "El campo pass es obligatorio";
+        }
+
+        if (!isset($data['salario'])) {
+            $errors['salario'] = "El campo salario es obligatorio";
+        }
+
+        if (!isset($data['disponible'])) {
+            $errors['disponible'] = "El campo disponible es obligatorio";
+        }
+
+        if (!isset($data['ahorros'])) {
+            $errors['ahorros'] = "El campo ahorros es obligatorio";
+        }
+
+        return $errors;
+    }
+
+    public function duplicateEmail(string $email, EntityManagerInterface $entityManager): bool
+    {
+        return $entityManager
+                ->getRepository(Usuarios::class)
+                ->findOneBy(['email' => $email]) !== null;
+    }
+
 }
